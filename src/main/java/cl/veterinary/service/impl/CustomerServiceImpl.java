@@ -1,12 +1,11 @@
 package cl.veterinary.service.impl;
 
-import cl.veterinary.CustomerFunction;
+
 import cl.veterinary.model.Customer;
 import cl.veterinary.repository.CustomerRepository;
 import cl.veterinary.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +28,15 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public Customer saveCustomer(Customer customer) {
         return customerRepository.save(customer);
+    }
+
+    @Override
+    public Customer updateCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
+    @Override
+    public void deleteCustomer(Long id) {
+        customerRepository.deleteById(id);
     }
 }

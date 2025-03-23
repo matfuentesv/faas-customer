@@ -113,5 +113,105 @@ public class CustomerFunction {
                     .build();
         }
     }
+
+
+    @FunctionName("updateCustomer")
+    public HttpResponseMessage updateCustomer(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.PUT},
+                    authLevel = AuthorizationLevel.FUNCTION,
+                    route = "updateCustomer/{id}") // id por ruta
+            HttpRequestMessage<Optional<String>> request,
+            @BindingName("id") String id,
+            final ExecutionContext context) {
+
+        context.getLogger().info("Procesando solicitud updateCustomer con ID: " + id);
+
+        try {
+            Long customerId = Long.parseLong(id);
+
+            // Parsear el JSON recibido
+            String requestBody = request.getBody().orElse("");
+            ObjectMapper mapper = new ObjectMapper();
+            Customer updatedData = mapper.readValue(requestBody, Customer.class);
+
+            // Buscar si el cliente existe
+            Optional<Customer> existingOpt = customerService.findCustomerById(customerId);
+            if (existingOpt.isEmpty()) {
+                return request.createResponseBuilder(HttpStatus.NOT_FOUND)
+                        .body("Cliente con ID " + id + " no encontrado.")
+                        .build();
+            }
+
+            Customer existing = existingOpt.get();
+
+            // Actualizar campos
+            existing.setId(customerId);
+            existing.setNombre(updatedData.getNombre());
+            existing.setTelefono(updatedData.getTelefono());
+            existing.setEmail(updatedData.getEmail());
+            existing.setDireccion(updatedData.getDireccion());
+
+            // Guardar cambios
+            Customer updated = customerService.updateCustomer(existing);
+
+            return request.createResponseBuilder(HttpStatus.OK)
+                    .body(updated)
+                    .build();
+
+        } catch (NumberFormatException e) {
+            return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("ID inválido: debe ser numérico.")
+                    .build();
+        } catch (Exception e) {
+            context.getLogger().severe("Error al actualizar cliente: " + e.getMessage());
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al actualizar cliente.")
+                    .build();
+        }
+    }
+
+    @FunctionName("deleteCustomer")
+    public HttpResponseMessage deleteCustomer(
+            @HttpTrigger(
+                    name = "req",
+                    methods = {HttpMethod.DELETE},
+                    authLevel = AuthorizationLevel.FUNCTION,
+                    route = "deleteCustomer/{id}") // ID por ruta
+            HttpRequestMessage<Optional<String>> request,
+            @BindingName("id") String id,
+            final ExecutionContext context) {
+
+        context.getLogger().info("Procesando solicitud deleteCustomer con ID: " + id);
+
+        try {
+            Long customerId = Long.parseLong(id);
+
+            // Buscar si existe
+            Optional<Customer> existing = customerService.findCustomerById(customerId);
+            if (existing.isEmpty()) {
+                return request.createResponseBuilder(HttpStatus.NOT_FOUND)
+                        .body("Cliente con ID " + id + " no encontrado.")
+                        .build();
+            }
+
+            // Eliminar
+            customerService.deleteCustomer(customerId);
+
+            return request.createResponseBuilder(HttpStatus.OK).build(); // 204 vacío
+
+        } catch (NumberFormatException e) {
+            return request.createResponseBuilder(HttpStatus.BAD_REQUEST)
+                    .body("ID inválido: debe ser numérico.")
+                    .build();
+        } catch (Exception e) {
+            context.getLogger().severe("Error al eliminar cliente: " + e.getMessage());
+            return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al eliminar cliente.")
+                    .build();
+        }
+    }
+
 }
 
